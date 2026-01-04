@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model courses {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title      String
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  slug       String?   @unique(map: "courses_slug_unique")
+  category   String?
+}
+
+model email_2fa_codes {
+  email      String   @id
+  code       String
+  expires_at DateTime @db.Timestamptz(6)
+}
+
+model password_reset_codes {
+  email      String   @id
+  code       String
+  expires_at DateTime @db.Timestamp(6)
+}
+
+model user_courses {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  course_slug String
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  users       users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id             Int            @id @default(autoincrement())
+  username       String         @unique
+  email          String         @unique
+  password_hash  String?
+  role           String         @default("user")
+  is_2fa_enabled Boolean        @default(false)
+  is_subscribed  Boolean        @default(false)
+  created_at     DateTime       @default(now())
+  avatar_url     String?
+  aboutMe        String?
+  user_courses   user_courses[]
+}
+model user_wishlist {
+  id          BigInt   @id @default(autoincrement())
+  user_id     Int
+  course_slug String
+  created_at  DateTime @default(now())
+
+  @@unique([user_id, course_slug])
+}
