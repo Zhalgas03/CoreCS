@@ -1,7 +1,19 @@
 import type { users as UserModel } from "@prisma/client"
 
 
-export function mapUser(user: UserModel) {
+export type SafeUser = {
+  id: number
+  username: string
+  email: string
+  avatar_url: string | null
+  aboutMe: string | null
+  created_at: Date
+  is_2fa_enabled: boolean
+  role: string
+  is_subscribed: boolean
+}
+
+export function mapUser(user: SafeUser) {
   return {
     id: user.id,
     username: user.username,
