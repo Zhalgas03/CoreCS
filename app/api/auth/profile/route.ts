@@ -60,18 +60,21 @@ export async function PUT(req: Request) {
   const { username, email, aboutMe } = await req.json()
 
   const user = await prisma.users.update({
-    where: { id: userId },
-    data: { username, email, aboutMe },
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      avatar_url: true,
-      aboutMe: true,
-      created_at: true,
-      is_2fa_enabled: true,
-    },
-  })
+  where: { id: userId },
+  data: { username, email, aboutMe },
+  select: {
+    id: true,
+    username: true,
+    email: true,
+    avatar_url: true,
+    aboutMe: true,
+    created_at: true,
+    is_2fa_enabled: true,
+    role: true,
+    is_subscribed: true,
+  },
+})
+
 
   return NextResponse.json(mapUser(user))
 }
