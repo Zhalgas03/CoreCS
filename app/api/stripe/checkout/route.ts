@@ -4,11 +4,20 @@ import Stripe from "stripe"
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-12-15.clover",
 })
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL
 
-if (!baseUrl) {
-  throw new Error("NEXT_PUBLIC_APP_URL is not defined")
+/**
+ * ✅ Единственно правильный способ получить baseUrl
+ */
+function getBaseUrl() {
+  // Vercel Preview / Production
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  // Local development
+  return "http://localhost:3000"
 }
+
 export async function POST(req: Request) {
   try {
     const { courseId, title, price, currency, userId } = await req.json()
@@ -28,9 +37,12 @@ export async function POST(req: Request) {
       )
     }
 
+    const baseUrl = getBaseUrl()
+
+    console.log("🌍 STRIPE BASE URL:", baseUrl)
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"],
 
       line_items: [
         {
@@ -39,7 +51,7 @@ export async function POST(req: Request) {
             product_data: {
               name: title,
             },
-            unit_amount: Math.round(price * 100), // 👈 ТОЛЬКО ТУТ *100
+            unit_amount: Math.round(price * 100),
           },
           quantity: 1,
         },
@@ -50,14 +62,13 @@ export async function POST(req: Request) {
         courseSlug: String(courseId),
       },
 
-    success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/courses/${courseId}`,
-
+      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/courses/${courseId}`,
     })
 
     return NextResponse.json({ url: session.url })
   } catch (error) {
-    console.log("❌ CHECKOUT ERROR:", error)
+    console.error("❌ CHECKOUT ERROR:", error)
     return NextResponse.json(
       { error: "Stripe checkout failed" },
       { status: 500 }
