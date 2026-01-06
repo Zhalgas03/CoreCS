@@ -8,16 +8,7 @@ import { useSettingsUser } from "../components/SettingsUserContext"
 export default function PhotoPage() {
   const ctx = useSettingsUser()
 
-  if (!ctx) {
-    return <div className="p-5">Loading…</div>
-  }
-
-  const { user, refresh } = ctx
-
-  if (!user) {
-    return <div className="p-5">Loading…</div>
-  }
-
+  /* ⬇️ ВСЕ useState — СРАЗУ */
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
 
@@ -28,6 +19,17 @@ export default function PhotoPage() {
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+
+  /* ⬇️ ПРОВЕРКИ ПОСЛЕ ХУКОВ */
+  if (!ctx) {
+    return <div className="p-5">Loading…</div>
+  }
+
+  const { user, refresh } = ctx
+
+  if (!user) {
+    return <div className="p-5">Loading…</div>
+  }
 
   /* ---------- FILE SELECT ---------- */
   const onSelectFile = (file: File) => {
@@ -75,32 +77,18 @@ export default function PhotoPage() {
     }
   }
 
+  /* ---------- UI ---------- */
   return (
     <>
-      {/* HEADER */}
-      <div
-        style={{
-          padding: "24px",
-          borderBottom: "1px solid #d1d7dc",
-        }}
-      >
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#24292f" }}>
+      <div style={{ padding: "24px", borderBottom: "1px solid #d1d7dc" }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700 }}>
           Photo
         </h1>
-        <p style={{ color: "#6a6f73" }}>
-          Add a nice photo of yourself for your profile.
-        </p>
+        <p>Add a nice photo of yourself for your profile.</p>
       </div>
 
-      {/* CONTENT */}
       <div style={{ padding: 24, maxWidth: 650 }}>
-        <div
-          style={{
-            marginBottom: 24,
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
+        <div style={{ marginBottom: 24, display: "flex", justifyContent: "center" }}>
           <div
             style={{
               position: "relative",
@@ -123,11 +111,7 @@ export default function PhotoPage() {
             ) : user.avatarUrl ? (
               <img
                 src={user.avatarUrl}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : null}
           </div>

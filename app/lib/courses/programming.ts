@@ -1,3 +1,4 @@
+import { cover } from "../storage"
 import { Course } from "./types"
 
 export const programmingCourses: Course[] = [
@@ -8,7 +9,7 @@ category: "programming" ,
   catalog: {
     title: "Programming Fundamentals",
     author: "CoreCS Team",
-    coverUrl: "/covers/programming-fundamentals.png",
+    coverUrl: cover("courses/programming-fundamentals.png"),
     rating: 4.7,
     reviewsCount: 3_100,
     durationHours: 40,
@@ -170,7 +171,7 @@ category: "programming" ,
   catalog: {
     title: "Algorithms and Data Structures",
     author: "CoreCS Team",
-    coverUrl: "/covers/algorithms.png",
+    coverUrl: cover("courses/algorithms.png"),  
     rating: 4.8,
     reviewsCount: 2_600,
     durationHours: 55,
@@ -328,7 +329,7 @@ category: "programming" ,
   catalog: {
     title: "Object-Oriented Programming",
     author: "CoreCS Team",
-    coverUrl: "/covers/oop.png",
+    coverUrl: cover("courses/oop.png"),
     rating: 4.8,
     reviewsCount: 2_600,
     durationHours: 72,
@@ -505,7 +506,7 @@ category: "programming" ,
   catalog: {
     title: "Software Engineering",
     author: "CoreCS Team",
-    coverUrl: "/covers/software-engineering.png",
+    coverUrl: cover("courses/software-engineering.png"),
     rating: 4.8,
     reviewsCount: 2_400,
     durationHours: 48,
@@ -685,7 +686,7 @@ category: "programming" ,
   catalog: {
     title: "Web Programming",
     author: "CoreCS Team",
-    coverUrl: "/covers/web-programming.png",
+    coverUrl: cover("courses/web-programming.png"),
     rating: 4.8,
     reviewsCount: 4_200,
     durationHours: 60,

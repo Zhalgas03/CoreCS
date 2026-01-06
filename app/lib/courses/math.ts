@@ -1,3 +1,4 @@
+import { cover } from "../storage"
 import { Course } from "./types"
 
 export const mathCourses: Course[] = [
@@ -8,7 +9,7 @@ export const mathCourses: Course[] = [
   catalog: {
     title: "Discrete Mathematics",
     author: "CoreCS Team",
-    coverUrl: "/covers/discrete-mathematics.png",
+    coverUrl: cover("courses/discrete-mathematics.png"),
     rating: 4.8,
     reviewsCount: 2_100,
     durationHours: 42,
@@ -159,7 +160,7 @@ export const mathCourses: Course[] = [
   catalog: {
     title: "Mathematics for Data Analysis",
     author: "CoreCS Team",
-    coverUrl: "/covers/mathematics-for-data-analysis.png",
+    coverUrl: cover("courses/mathematics-for-data-analysis.png"),
     rating: 4.8,
     reviewsCount: 2_100,
     durationHours: 32,

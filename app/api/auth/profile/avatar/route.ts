@@ -2,8 +2,7 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { prisma } from "@/app/lib/prisma"
-import path from "path"
-import fs from "fs/promises"
+import { supabase } from "@/app/lib/supabase-server"
 
 const JWT_SECRET = process.env.JWT_SECRET!
 
@@ -17,24 +16,14 @@ export async function POST(req: Request) {
   const token = cookieStore.get("token")?.value
 
   if (!token) {
-    return NextResponse.json(
-      { message: "Unauthorized" },
-      { status: 401 }
-    )
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
   }
 
   let payload: JwtPayload
-
   try {
-    payload = jwt.verify(
-      token,
-      JWT_SECRET
-    ) as JwtPayload
+    payload = jwt.verify(token, JWT_SECRET) as JwtPayload
   } catch {
-    return NextResponse.json(
-      { message: "Invalid token" },
-      { status: 401 }
-    )
+    return NextResponse.json({ message: "Invalid token" }, { status: 401 })
   }
 
   /* ---------- FILE ---------- */
@@ -42,28 +31,32 @@ export async function POST(req: Request) {
   const file = formData.get("file") as File | null
 
   if (!file) {
-    return NextResponse.json(
-      { message: "No file uploaded" },
-      { status: 400 }
-    )
+    return NextResponse.json({ message: "No file" }, { status: 400 })
   }
 
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
+  const buffer = Buffer.from(await file.arrayBuffer())
 
-  const filename = `${payload.userId}-${Date.now()}-${file.name}`
-  const avatarsDir = path.join(
-    process.cwd(),
-    "public",
-    "avatars"
-  )
+  const filePath = `users/${payload.userId}/avatar.jpg`
 
-  await fs.mkdir(avatarsDir, { recursive: true })
+  /* ---------- UPLOAD ---------- */
+  const { error } = await supabase.storage
+    .from("avatars")
+    .upload(filePath, buffer, {
+      upsert: true,
+      contentType: file.type,
+    })
 
-  const filePath = path.join(avatarsDir, filename)
-  await fs.writeFile(filePath, buffer)
+  if (error) {
+    console.error(error)
+    return NextResponse.json({ message: "Upload failed" }, { status: 500 })
+  }
 
-  const avatarUrl = `/avatars/${filename}`
+  /* ---------- PUBLIC URL ---------- */
+const { data } = supabase.storage
+  .from("avatars")
+  .getPublicUrl(filePath)
+
+const avatarUrl = `${data.publicUrl}?t=${Date.now()}`
 
   /* ---------- DB ---------- */
   await prisma.users.update({

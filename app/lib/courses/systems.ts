@@ -1,3 +1,4 @@
+import { cover } from "../storage"
 import { Course } from "./types"
 
 export const systemsCourses: Course[] = [
@@ -8,7 +9,7 @@ category: "systems" ,
   catalog: {
     title: "Operating Systems & Virtualization",
     author: "CoreCS Team",
-    coverUrl: "/covers/operating-systems.png",
+    coverUrl: cover("courses/operating-systems.png"),
     rating: 4.8,
     reviewsCount: 2_400,
     durationHours: 48,
@@ -159,7 +160,7 @@ category: "systems" ,
   catalog: {
     title: "Computer Networks",
     author: "CoreCS Team",
-    coverUrl: "/covers/computer-networks.png",
+    coverUrl: cover("courses/computer-networks.png"),
     rating: 4.8,
     reviewsCount: 2_400,
     durationHours: 55,
@@ -305,7 +306,7 @@ category: "systems" ,
   catalog: {
     title: "System Security",
     author: "CoreCS Team",
-    coverUrl: "/covers/system-security.png",
+    coverUrl: cover("courses/system-security.png"),
     rating: 4.8,
     reviewsCount: 2_400,
     durationHours: 42,

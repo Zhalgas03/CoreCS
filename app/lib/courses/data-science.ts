@@ -1,3 +1,4 @@
+import { cover } from "../storage"
 import { Course } from "./types"
 
 export const dataScienceCourses: Course[] = [
@@ -8,7 +9,7 @@ category:"data-science"  ,
   catalog: {
     title: "Databases",
     author: "CoreCS Team",
-    coverUrl: "/covers/databases.png",
+    coverUrl: cover("courses/databases.png"),
     rating: 4.9,
     reviewsCount: 3_200,
     durationHours: 28,
@@ -159,7 +160,7 @@ category:"data-science"  ,
   catalog: {
     title: "Machine Learning",
     author: "CoreCS Team",
-    coverUrl: "/covers/machine-learning.png",
+    coverUrl: cover("courses/machine-learning.png"),
     rating: 4.8,
     reviewsCount: 4_100,
     durationHours: 34,
@@ -307,7 +308,7 @@ category:"data-science"  ,
   catalog: {
     title: "Data Mining & Analytics",
     author: "CoreCS Team",
-    coverUrl: "/covers/data-mining.png",
+    coverUrl: cover("courses/data-mining.png"),
     rating: 4.8,
     reviewsCount: 2_100,
     durationHours: 36,
