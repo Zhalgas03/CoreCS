@@ -4,7 +4,17 @@ import { useEffect, useState } from "react"
 import { useSettingsUser } from "../components/SettingsUserContext"
 
 export default function SecurityPage() {
-  const { user, refresh } = useSettingsUser()
+  const ctx = useSettingsUser()
+
+  if (!ctx) {
+    return <div className="p-5">Loading…</div>
+  }
+
+  const { user, refresh } = ctx
+
+  if (!user) {
+    return <div className="p-5">Loading…</div>
+  }
 
   const [email, setEmail] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
@@ -14,24 +24,18 @@ export default function SecurityPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (!user) return
     setEmail(user.email ?? "")
-    setIs2FAEnabled(user.is2FAEnabled ?? false)
+    setIs2FAEnabled(user.is2FAEnabled)
   }, [user])
 
-  if (!user) return <div className="p-5">Loading…</div>
-
   /* ---------- EMAIL ---------- */
-
   const saveEmail = async () => {
     setSaving(true)
     setMessage("")
 
     const res = await fetch("/api/auth/profile", {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     })
 
@@ -44,20 +48,14 @@ export default function SecurityPage() {
   }
 
   /* ---------- PASSWORD ---------- */
-
   const changePassword = async () => {
     setSaving(true)
     setMessage("")
 
     const res = await fetch("/api/auth/profile/password", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        currentPassword,
-        newPassword,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword }),
     })
 
     const data = await res.json()
@@ -75,15 +73,11 @@ export default function SecurityPage() {
   }
 
   /* ---------- 2FA ---------- */
-
   const toggle2FA = async () => {
     const next = !is2FAEnabled
     setIs2FAEnabled(next)
 
-    await fetch("/api/auth/profile/2fa", {
-      method: "POST",
-    })
-
+    await fetch("/api/auth/profile/2fa", { method: "POST" })
     await refresh()
   }
 
@@ -91,7 +85,7 @@ export default function SecurityPage() {
     <>
       {/* HEADER */}
       <div style={{ padding: 24, borderBottom: "1px solid #d1d7dc" }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#111827" }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700 }}>
           Account security
         </h1>
         <p style={{ color: "#6a6f73" }}>
@@ -109,16 +103,12 @@ export default function SecurityPage() {
 
         {/* EMAIL */}
         <section style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
-            Email address
-          </h3>
-
+          <h3>Email address</h3>
           <input
             className="form-control mb-3"
             value={email}
             onChange={e => setEmail(e.target.value)}
           />
-
           <button
             className="btn btn-outline-primary"
             disabled={saving}
@@ -131,11 +121,8 @@ export default function SecurityPage() {
         <hr />
 
         {/* PASSWORD */}
-        <section style={{ margin: "16px 0" }}>
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
-            Change password
-          </h3>
-
+        <section>
+          <h3>Change password</h3>
           <input
             className="form-control mb-3"
             type="password"
@@ -143,7 +130,6 @@ export default function SecurityPage() {
             value={currentPassword}
             onChange={e => setCurrentPassword(e.target.value)}
           />
-
           <input
             className="form-control mb-3"
             type="password"
@@ -151,7 +137,6 @@ export default function SecurityPage() {
             value={newPassword}
             onChange={e => setNewPassword(e.target.value)}
           />
-
           <button
             className="btn btn-primary"
             disabled={saving}
@@ -165,10 +150,7 @@ export default function SecurityPage() {
 
         {/* 2FA */}
         <section style={{ marginTop: 16 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
-            Two-factor authentication
-          </h3>
-
+          <h3>Two-factor authentication</h3>
           <div className="form-check form-switch">
             <input
               className="form-check-input"

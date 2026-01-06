@@ -4,7 +4,13 @@ import { useState, useEffect } from "react"
 import { useSettingsUser } from "./components/SettingsUserContext"
 
 export default function SettingsProfilePage() {
-  const { user, refresh } = useSettingsUser()
+  const ctx = useSettingsUser()
+
+  if (!ctx) {
+    return <div className="p-5">Loading…</div>
+  }
+
+  const { user, refresh } = ctx
 
   const [username, setUsername] = useState("")
   const [aboutMe, setAboutMe] = useState("")
@@ -17,25 +23,30 @@ export default function SettingsProfilePage() {
     setAboutMe(user.aboutMe ?? "")
   }, [user])
 
-  if (!user) return <div className="p-5">Loading…</div>
-
-
   const save = async () => {
     setSaving(true)
     setMessage("")
 
-    await fetch("/api/auth/profile", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({ username, aboutMe }),
-    })
+    try {
+      const res = await fetch("/api/auth/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, aboutMe }),
+      })
 
-    await refresh()
-    setMessage("Profile updated successfully")
-    setSaving(false)
+      if (!res.ok) {
+        throw new Error("Failed to update profile")
+      }
+
+      await refresh()
+      setMessage("Profile updated successfully")
+    } catch {
+      setMessage("Something went wrong")
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -65,7 +76,7 @@ export default function SettingsProfilePage() {
 
         {/* USERNAME */}
         <section style={{ marginBottom: 24 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 700 ,color: "#111827"}}>
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
             Username
           </h3>
           <input

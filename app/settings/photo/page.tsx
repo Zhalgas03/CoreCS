@@ -5,9 +5,19 @@ import Cropper from "react-easy-crop"
 import { getCroppedImg } from "../../lib/cropImage"
 import { useSettingsUser } from "../components/SettingsUserContext"
 
-/* ---------- PAGE ---------- */
-
 export default function PhotoPage() {
+  const ctx = useSettingsUser()
+
+  if (!ctx) {
+    return <div className="p-5">Loading…</div>
+  }
+
+  const { user, refresh } = ctx
+
+  if (!user) {
+    return <div className="p-5">Loading…</div>
+  }
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
 
@@ -19,25 +29,18 @@ export default function PhotoPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
-  const { user, refresh } = useSettingsUser()
-  if (!user) return <div className="p-5">Loading…</div>
-
   /* ---------- FILE SELECT ---------- */
-
   const onSelectFile = (file: File) => {
     setFile(file)
-    const url = URL.createObjectURL(file)
-    setPreviewUrl(url)
+    setPreviewUrl(URL.createObjectURL(file))
   }
 
   /* ---------- CROP ---------- */
-
   const onCropComplete = (_: any, areaPixels: any) => {
     setCroppedAreaPixels(areaPixels)
   }
 
   /* ---------- SAVE ---------- */
-
   const save = async () => {
     if (!previewUrl || !croppedAreaPixels) return
 
@@ -53,13 +56,16 @@ export default function PhotoPage() {
       const formData = new FormData()
       formData.append("file", croppedBlob, "avatar.jpg")
 
-      await fetch("/api/auth/profile/avatar", {
+      const res = await fetch("/api/auth/profile/avatar", {
         method: "POST",
-        body: formData, // ✅ cookie уйдёт автоматически
+        body: formData,
       })
 
-      await refresh()
+      if (!res.ok) {
+        throw new Error("Upload failed")
+      }
 
+      await refresh()
       setPreviewUrl(null)
       setFile(null)
     } catch {
@@ -74,28 +80,20 @@ export default function PhotoPage() {
       {/* HEADER */}
       <div
         style={{
-          padding: "24px 24px",
+          padding: "24px",
           borderBottom: "1px solid #d1d7dc",
         }}
       >
-        <h1
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            marginBottom: 4,
-            color: "#24292f",
-          }}
-        >
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#24292f" }}>
           Photo
         </h1>
-        <p style={{ color: "#6a6f73", margin: 0 }}>
+        <p style={{ color: "#6a6f73" }}>
           Add a nice photo of yourself for your profile.
         </p>
       </div>
 
       {/* CONTENT */}
       <div style={{ padding: 24, maxWidth: 650 }}>
-        {/* PREVIEW / CROPPER */}
         <div
           style={{
             marginBottom: 24,
@@ -110,9 +108,6 @@ export default function PhotoPage() {
               height: 300,
               background: "#f7f9fa",
               border: "1px solid #d1d7dc",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
             {previewUrl ? (
@@ -126,28 +121,18 @@ export default function PhotoPage() {
                 onCropComplete={onCropComplete}
               />
             ) : user.avatarUrl ? (
-              <div
+              <img
+                src={user.avatarUrl}
                 style={{
-                  width: 300,
-                  height: 300,
-                  borderRadius: 8,
-                  overflow: "hidden",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
                 }}
-              >
-                <img
-                  src={user.avatarUrl}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
-              </div>
+              />
             ) : null}
           </div>
         </div>
 
-        {/* ZOOM */}
         {previewUrl && (
           <input
             type="range"
@@ -160,35 +145,19 @@ export default function PhotoPage() {
           />
         )}
 
-        {/* FILE INPUT */}
-        <div style={{ marginBottom: 24 }}>
-          <label
-            style={{
-              fontWeight: 700,
-              display: "block",
-              marginBottom: 8,
-              color: "#24292f",
-            }}
-          >
-            Add / Change Image
-          </label>
+        <input
+          type="file"
+          className="form-control mb-3"
+          accept="image/*"
+          onChange={e =>
+            e.target.files && onSelectFile(e.target.files[0])
+          }
+        />
 
-          <input
-            type="file"
-            className="form-control"
-            accept="image/*"
-            onChange={e =>
-              e.target.files && onSelectFile(e.target.files[0])
-            }
-          />
-        </div>
-
-        {/* SAVE */}
         <button
           className="btn btn-primary"
           disabled={!file || saving}
           onClick={save}
-          style={{ fontWeight: 600, padding: "6px 20px" }}
         >
           {saving ? "Saving…" : "Save"}
         </button>
