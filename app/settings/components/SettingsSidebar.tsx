@@ -1,75 +1,162 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useSettingsUser } from "./SettingsUserContext"
 
-type User = {
-  username: string
-  email: string
-  is2FAEnabled: boolean
-  avatarUrl?: string | null
-  aboutMe?: string | null
-  createdAt?: string
-}
+export default function SettingsSidebar() {
+  const pathname = usePathname()
+  const ctx = useSettingsUser()
 
-type Ctx = {
-  user: User | null
-  loading: boolean
-  refresh: () => Promise<void>
-  setUser: (u: User | null) => void
-}
+  // контекст может быть null при первом рендере
+  if (!ctx) return null
 
-const SettingsUserContext = createContext<Ctx | null>(null)
+  const { user } = ctx
 
-export function useSettingsUser() {
-  return useContext(SettingsUserContext)
-}
-
-export function SettingsUserProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  async function refresh() {
-    try {
-      setLoading(true)
-
-      const res = await fetch("/api/auth/profile", {
-        credentials: "include",
-        cache: "no-store",
-      })
-
-      if (!res.ok) {
-        setUser(null)
-        return
-      }
-
-      const data = await res.json()
-
-      setUser({
-        username: data.username,
-        email: data.email,
-        is2FAEnabled: data.is2FAEnabled,
-        aboutMe: data.aboutMe ?? "",
-        avatarUrl: data.avatarUrl,
-        createdAt: data.createdAt,
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    refresh()
-  }, [])
+  // ⬅️ ВАЖНО: пока user не загружен — ничего не рендерим
+  if (!user) return null
 
   return (
-    <SettingsUserContext.Provider
-      value={{ user, loading, setUser, refresh }}
+    <aside
+      style={{
+        width: 260,
+        background: "#fff",
+        borderRadius: 6,
+        border: "1px solid #d1d7dc",
+        overflow: "hidden",
+      }}
     >
+      {/* USER HEADER */}
+      <div
+        style={{
+          padding: 24,
+          borderBottom: "1px solid #d1d7dc",
+          textAlign: "center",
+        }}
+      >
+        {user.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            width={96}
+            height={96}
+            alt="Avatar"
+            style={{
+              borderRadius: 12,
+              objectFit: "cover",
+              display: "block",
+              margin: "0 auto 12px",
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 12,
+              background: "#111827",
+              color: "#fff",
+              fontSize: 40,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 12px",
+            }}
+          >
+            {user.username.charAt(0).toUpperCase()}
+          </div>
+        )}
+
+        <div
+          style={{
+            fontWeight: 600,
+            fontSize: 18,
+            color: "#1c1d1f",
+            marginBottom: 6,
+          }}
+        >
+          {user.username}
+        </div>
+
+        <Link
+          href="/profile"
+          style={{
+            fontSize: 14,
+            color: "#1c1d1f",
+            textDecoration: "underline",
+          }}
+        >
+          View public profile
+        </Link>
+      </div>
+
+      {/* NAV */}
+      <nav style={{ padding: 12 }}>
+        <NavItem href="/settings" active={pathname === "/settings"}>
+          Profile
+        </NavItem>
+
+        <NavItem
+          href="/settings/photo"
+          active={pathname === "/settings/photo"}
+        >
+          Photo
+        </NavItem>
+
+        <NavItem
+          href="/settings/security"
+          active={pathname === "/settings/security"}
+        >
+          Account Security
+        </NavItem>
+
+        <NavItem muted>Subscriptions</NavItem>
+        <NavItem muted>Payment methods</NavItem>
+        <NavItem muted>Privacy</NavItem>
+        <NavItem muted>Notification Preferences</NavItem>
+        <NavItem muted>API clients</NavItem>
+      </nav>
+    </aside>
+  )
+}
+
+/* ---------- NAV ITEM ---------- */
+
+function NavItem({
+  href,
+  active,
+  muted,
+  children,
+}: {
+  href?: string
+  active?: boolean
+  muted?: boolean
+  children: string
+}) {
+  const style = {
+    display: "block",
+    padding: "10px 12px",
+    borderRadius: 4,
+    marginBottom: 4,
+    fontWeight: 500,
+    fontSize: 15,
+    textDecoration: "none",
+    background: active ? "#a1a1b3" : "transparent",
+    color: muted
+      ? "#9ca3af"
+      : active
+      ? "#ffffff"
+      : "#1c1d1f",
+    cursor: muted ? "default" : "pointer",
+  } as const
+
+  if (muted || !href) {
+    return <div style={style}>{children}</div>
+  }
+
+  return (
+    <Link href={href} style={style}>
       {children}
-    </SettingsUserContext.Provider>
+    </Link>
   )
 }
