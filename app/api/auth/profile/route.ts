@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
+import jwt from "jsonwebtoken"
 import { prisma } from "@/app/lib/prisma"
-import { verify } from "jsonwebtoken"
 import { mapUser } from "@/app/lib/mappers/user"
+
 const JWT_SECRET = process.env.JWT_SECRET!
 
-function getUserId(req: Request): number | null {
-  const auth = req.headers.get("authorization")
-  if (!auth) return null
+
+async function getUserIdFromCookie(): Promise<number | null> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+  if (!token) return null
 
   try {
-    const token = auth.split(" ")[1]
-    const payload: any = verify(token, JWT_SECRET)
+    const payload: any = jwt.verify(token, JWT_SECRET)
     return payload.userId
   } catch {
     return null
@@ -18,8 +21,8 @@ function getUserId(req: Request): number | null {
 }
 
 /* ---------- GET PROFILE ---------- */
-export async function GET(req: Request) {
-  const userId = getUserId(req)
+export async function GET() {
+  const userId = await getUserIdFromCookie()
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
   }
@@ -35,7 +38,6 @@ export async function GET(req: Request) {
       created_at: true,
       is_2fa_enabled: true,
       role: true,
-      password_hash: true,
       is_subscribed: true,
     },
   })
@@ -44,15 +46,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ message: "User not found" }, { status: 404 })
   }
 
-
-  
   return NextResponse.json(mapUser(user))
 }
 
 
 /* ---------- UPDATE PROFILE ---------- */
 export async function PUT(req: Request) {
-  const userId = getUserId(req)
+  const userId = await getUserIdFromCookie()
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
   }
@@ -73,5 +73,6 @@ export async function PUT(req: Request) {
     },
   })
 
-  return NextResponse.json(user)
+  return NextResponse.json(mapUser(user))
 }
+

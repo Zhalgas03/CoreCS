@@ -1,7 +1,14 @@
+"use client"
+
 import SettingsSidebar from "./components/SettingsSidebar"
 import { SettingsUserProvider } from "./components/SettingsUserContext"
 import "@/app/lib/fontawesome"
-export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+
+export default function SettingsLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <SettingsUserProvider>
       <div
@@ -27,7 +34,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
             style={{
               background: "#fff",
               borderRadius: 6,
-          
               padding: 32,
               border: "1px solid #d1d7dc",
             }}

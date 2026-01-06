@@ -1,66 +1,77 @@
-"use client"
+import { cookies } from "next/headers"
+import jwt from "jsonwebtoken"
+import { prisma } from "@/app/lib/prisma"
+import { courses } from "@/app/lib/courses"
+import MyLearningClient from "./MyLearningClient"
 
-import { useEffect, useState } from "react"
-import LearningTabs, { LearningTab } from "../components/LearningTabs"
-import MyCourseCard from "../components/MyCourseCard"
 
-type Course = {
-  slug: string
-  title: string
-  progress: number
-}
+export default async function MyLearningPage() {
+  
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
 
-export default function MyLearningPage() {
-  const [courses, setCourses] = useState<Course[]>([])
-  const [tab, setTab] = useState<LearningTab>("all")
-  const [loading, setLoading] = useState(true)
+  if (!token) {
+    return (
+      <main style={{ padding: 32 }}>
+        <h1>My Learning</h1>
+        <p>You need to log in</p>
+      </main>
+    )
+  }
 
-  useEffect(() => {
-    // 🔥 временно: все курсы in progress
-    setCourses([
-      { slug: "data-science", title: "Data Science", progress: 30 },
-      { slug: "ml", title: "Machine Learning", progress: 45 },
-      { slug: "sql", title: "SQL Basics", progress: 10 },
-    ])
-    setLoading(false)
-  }, [])
+  let userId: number | null = null
 
-  if (loading) return <div>Loading…</div>
+  try {
+    const payload: any = jwt.verify(token, process.env.JWT_SECRET!)
+    userId = payload.userId
+  } catch {
+    userId = null
+  }
 
-  const filteredCourses = courses.filter(course => {
-    if (tab === "completed") return course.progress === 100
-    if (tab === "wishlist") return false // позже
-    if (tab === "in-progress") return course.progress < 100
-    return true
+  if (!userId) {
+    return (
+      <main style={{ padding: 32 }}>
+        <h1>My Learning</h1>
+        <p>Invalid session</p>
+      </main>
+    )
+  }
+
+  // 📦 купленные курсы
+  const owned = await prisma.user_courses.findMany({
+    where: { user_id: userId },
+    select: { course_slug: true },
   })
 
+  // ❤️ wishlist
+  const wishlist = await prisma.user_wishlist.findMany({
+    where: { user_id: userId },
+    select: { course_slug: true },
+  })
+
+  const ownedSlugs = owned.map(c => c.course_slug)
+  const wishlistSlugs = wishlist.map(w => w.course_slug)
+
+  const ownedCourses = courses
+    .filter(c => ownedSlugs.includes(c.slug))
+    .map(c => ({
+      slug: c.slug,
+      title: c.catalog.title,
+      progress: 0, // TODO: реальный прогресс позже
+    }))
+
+  const wishlistCourses = courses
+    .filter(c => wishlistSlugs.includes(c.slug))
+    .map(c => ({
+      slug: c.slug,
+      title: c.catalog.title,
+      progress: 0,
+    }))
+
   return (
-    <main style={{ padding: 32, maxWidth: 900, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
-        My Learning
-      </h1>
-
-      <LearningTabs active={tab} onChange={setTab} />
-
-      <div style={{ marginTop: 24 }}>
-        {filteredCourses.length === 0 ? (
-          <p style={{ color: "#6b7280" }}>
-            No courses here yet
-          </p>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-              gap: 16,
-            }}
-          >
-            {filteredCourses.map(course => (
-              <MyCourseCard key={course.slug} course={course} />
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
+    <MyLearningClient
+      ownedCourses={ownedCourses}
+      wishlistCourses={wishlistCourses}
+    />
   )
 }

@@ -42,13 +42,15 @@ export default function LoginPage() {
       return
     }
 
-    if (data.token) {
-      localStorage.setItem("token", data.token)
+    if (data.success) {
+      router.refresh()
       router.push("/")
     } else {
       setError(data.message || "Login failed")
       recaptchaRef.current?.reset()
+      setCaptchaToken("")
     }
+
       }
 
   const submit2FA = async () => {
@@ -60,8 +62,8 @@ export default function LoginPage() {
 
     const data = await res.json()
 
-    if (data.token) {
-      localStorage.setItem("token", data.token)
+    if (data.success) {
+      router.refresh()
       router.push("/")
     } else {
       setError(data.message || "Invalid verification code")

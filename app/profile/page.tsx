@@ -1,76 +1,52 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useSettingsUser } from "@/app/settings/components/SettingsUserContext"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+import jwt from "jsonwebtoken"
+import { prisma } from "@/app/lib/prisma"
 
 import ProfileCard from "@/app/components/profile/ProfileCard"
 import Achievements from "@/app/components/profile/Achievements"
 import LearningActivity from "@/app/components/profile/LearningActivity"
 
-type Profile = {
-  username: string
-  avatarUrl?: string | null
-  aboutMe?: string | null
-  createdAt: string
+type JwtPayload = {
+  userId: number
 }
 
-export default function ProfilePage() {
-  const router = useRouter()
-  const { user } = useSettingsUser()
+export default async function ProfilePage() {
+  /* ---------- AUTH ---------- */
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
 
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    // ✅ 1. Берём данные сразу из контекста (БЫСТРО)
-    if (user) {
-      setProfile({
-        username: user.username,
-        avatarUrl: user.avatarUrl,
-        aboutMe: user.aboutMe ?? null,
-        createdAt: user.createdAt ?? new Date().toISOString(),
-      })
-      setLoading(false)
-      return
-    }
-
-    // ✅ 2. Fallback — прямой заход на /profile
-    const token = localStorage.getItem("token")
-    if (!token) {
-      router.push("/login")
-      return
-    }
-
-    fetch("/api/auth/profile", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Unauthorized")
-        return res.json()
-      })
-      .then(data => {
-        setProfile(data)
-        setLoading(false)
-      })
-      .catch(() => router.push("/login"))
-  }, [user, router])
-
-  if (loading || !profile) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "grid",
-          placeItems: "center",
-          color: "#6b7280",
-        }}
-      >
-        Loading…
-      </div>
-    )
+  if (!token) {
+    redirect("/login")
   }
 
+  let payload: JwtPayload
+
+  try {
+    payload = jwt.verify(
+      token,
+      process.env.JWT_SECRET!
+    ) as JwtPayload
+  } catch {
+    redirect("/login")
+  }
+
+  /* ---------- LOAD USER ---------- */
+  const user = await prisma.users.findUnique({
+    where: { id: payload.userId },
+    select: {
+      username: true,
+      avatar_url: true,
+      aboutMe: true,
+      created_at: true,
+    },
+  })
+
+  if (!user) {
+    redirect("/login")
+  }
+
+  /* ---------- RENDER ---------- */
   return (
     <div style={{ background: "#fff", padding: "72px 0" }}>
       <div
@@ -85,10 +61,10 @@ export default function ProfilePage() {
       >
         {/* LEFT */}
         <ProfileCard
-          username={profile.username}
-          avatarUrl={profile.avatarUrl}
-          aboutMe={profile.aboutMe}
-          createdAt={profile.createdAt}
+          username={user.username}
+          avatarUrl={user.avatar_url}
+          aboutMe={user.aboutMe}
+          createdAt={user.created_at.toISOString()}
         />
 
         {/* RIGHT */}

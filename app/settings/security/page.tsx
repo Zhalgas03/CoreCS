@@ -21,16 +21,16 @@ export default function SecurityPage() {
 
   if (!user) return <div className="p-5">Loading…</div>
 
-  const token = localStorage.getItem("token")
+  /* ---------- EMAIL ---------- */
 
   const saveEmail = async () => {
     setSaving(true)
+    setMessage("")
 
     const res = await fetch("/api/auth/profile", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ email }),
     })
@@ -43,35 +43,38 @@ export default function SecurityPage() {
     setSaving(false)
   }
 
-const changePassword = async () => {
-  setSaving(true)
-  setMessage("")
+  /* ---------- PASSWORD ---------- */
 
-  const res = await fetch("/api/auth/profile/password", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      currentPassword,
-      newPassword,
-    }),
-  })
+  const changePassword = async () => {
+    setSaving(true)
+    setMessage("")
 
-  const data = await res.json()
+    const res = await fetch("/api/auth/profile/password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+      }),
+    })
 
-  if (!res.ok) {
-    setMessage(data.message || "Invalid current password")
+    const data = await res.json()
+
+    if (!res.ok) {
+      setMessage(data.message || "Invalid current password")
+      setSaving(false)
+      return
+    }
+
+    setCurrentPassword("")
+    setNewPassword("")
+    setMessage("Password updated successfully")
     setSaving(false)
-    return
   }
 
-  setCurrentPassword("")
-  setNewPassword("")
-  setMessage("Password updated successfully")
-  setSaving(false)
-}
+  /* ---------- 2FA ---------- */
 
   const toggle2FA = async () => {
     const next = !is2FAEnabled
@@ -79,7 +82,6 @@ const changePassword = async () => {
 
     await fetch("/api/auth/profile/2fa", {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
     })
 
     await refresh()
@@ -89,7 +91,7 @@ const changePassword = async () => {
     <>
       {/* HEADER */}
       <div style={{ padding: 24, borderBottom: "1px solid #d1d7dc" }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700 ,color: "#111827" }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#111827" }}>
           Account security
         </h1>
         <p style={{ color: "#6a6f73" }}>

@@ -6,7 +6,7 @@ export default function CourseHero({ course }: { course: Course }) {
     <section
       className="text-white"
       style={{
-        background: "linear-gradient(135deg, #1f2933, #111827)",
+        background: "#1b1b1b",
       }}
     >
       <div className="mx-auto px-4 py-5" style={{ maxWidth: 1100 }}>

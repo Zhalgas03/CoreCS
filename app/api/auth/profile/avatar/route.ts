@@ -1,43 +1,62 @@
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
+import jwt from "jsonwebtoken"
 import { prisma } from "@/app/lib/prisma"
-import { verify } from "jsonwebtoken"
 import path from "path"
 import fs from "fs/promises"
 
 const JWT_SECRET = process.env.JWT_SECRET!
 
-function getUserId(req: Request): number | null {
-  const auth = req.headers.get("authorization")
-  if (!auth) return null
-
-  try {
-    const token = auth.split(" ")[1]
-    const payload: any = verify(token, JWT_SECRET)
-    return payload.userId
-  } catch {
-    return null
-  }
+type JwtPayload = {
+  userId: number
 }
 
 export async function POST(req: Request) {
-  const userId = getUserId(req)
-  if (!userId) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+  /* ---------- AUTH ---------- */
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  if (!token) {
+    return NextResponse.json(
+      { message: "Unauthorized" },
+      { status: 401 }
+    )
   }
 
+  let payload: JwtPayload
+
+  try {
+    payload = jwt.verify(
+      token,
+      JWT_SECRET
+    ) as JwtPayload
+  } catch {
+    return NextResponse.json(
+      { message: "Invalid token" },
+      { status: 401 }
+    )
+  }
+
+  /* ---------- FILE ---------- */
   const formData = await req.formData()
   const file = formData.get("file") as File | null
 
   if (!file) {
-    return NextResponse.json({ message: "No file uploaded" }, { status: 400 })
+    return NextResponse.json(
+      { message: "No file uploaded" },
+      { status: 400 }
+    )
   }
 
   const bytes = await file.arrayBuffer()
   const buffer = Buffer.from(bytes)
 
-  const filename = `${userId}-${Date.now()}-${file.name}`
-  const avatarsDir = path.join(process.cwd(), "public", "avatars")
-
+  const filename = `${payload.userId}-${Date.now()}-${file.name}`
+  const avatarsDir = path.join(
+    process.cwd(),
+    "public",
+    "avatars"
+  )
 
   await fs.mkdir(avatarsDir, { recursive: true })
 
@@ -46,8 +65,9 @@ export async function POST(req: Request) {
 
   const avatarUrl = `/avatars/${filename}`
 
+  /* ---------- DB ---------- */
   await prisma.users.update({
-    where: { id: userId },
+    where: { id: payload.userId },
     data: { avatar_url: avatarUrl },
   })
 

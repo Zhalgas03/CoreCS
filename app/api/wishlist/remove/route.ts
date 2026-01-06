@@ -1,20 +1,41 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/app/lib/prisma"
 import jwt from "jsonwebtoken"
+import { cookies } from "next/headers"
 
 export async function DELETE(req: Request) {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "")
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  /* ---------- TOKEN ---------- */
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  if (!token) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    )
+  }
 
   let payload: any
   try {
     payload = jwt.verify(token, process.env.JWT_SECRET!)
   } catch {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    return NextResponse.json(
+      { error: "Invalid token" },
+      { status: 401 }
+    )
   }
 
+  /* ---------- DATA ---------- */
   const { courseSlug } = await req.json()
 
+  if (!courseSlug) {
+    return NextResponse.json(
+      { error: "Missing courseSlug" },
+      { status: 400 }
+    )
+  }
+
+  /* ---------- DELETE ---------- */
   await prisma.user_wishlist.deleteMany({
     where: {
       user_id: payload.userId,

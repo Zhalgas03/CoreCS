@@ -1,28 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import Cropper from "react-easy-crop"
 import { getCroppedImg } from "../../lib/cropImage"
 import { useSettingsUser } from "../components/SettingsUserContext"
 
-/* ---------- HELPERS ---------- */
-
-function normalizeUrl(url: string | null) {
-  if (!url) return null
-  if (url.startsWith("http")) return url
-  return `${window.location.origin}${url}`
-}
-
 /* ---------- PAGE ---------- */
 
 export default function PhotoPage() {
-  
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("token")
-      : null
-
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
 
@@ -54,7 +39,7 @@ export default function PhotoPage() {
   /* ---------- SAVE ---------- */
 
   const save = async () => {
-    if (!previewUrl || !croppedAreaPixels || !token) return
+    if (!previewUrl || !croppedAreaPixels) return
 
     setSaving(true)
     setError("")
@@ -68,10 +53,9 @@ export default function PhotoPage() {
       const formData = new FormData()
       formData.append("file", croppedBlob, "avatar.jpg")
 
-      const res = await fetch("/api/auth/profile/avatar", {
+      await fetch("/api/auth/profile/avatar", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+        body: formData, // ✅ cookie уйдёт автоматически
       })
 
       await refresh()
@@ -112,60 +96,56 @@ export default function PhotoPage() {
       {/* CONTENT */}
       <div style={{ padding: 24, maxWidth: 650 }}>
         {/* PREVIEW / CROPPER */}
-<div
-  style={{
-    marginBottom: 24,
-    display: "flex",
-    justifyContent: "center",
-  }}
->
-  <div
-    style={{
-      position: "relative",
-      width: 600,
-      height: 300,
-      background: "#f7f9fa",
-      border: "1px solid #d1d7dc",
-
-      display: "flex",          
-      alignItems: "center",     
-      justifyContent: "center",  
-    }}
-  >
-    {previewUrl ? (
-      <Cropper
-        image={previewUrl}
-        crop={crop}
-        zoom={zoom}
-        aspect={1}
-        onCropChange={setCrop}
-        onZoomChange={setZoom}
-        onCropComplete={onCropComplete}
-      />
-    ) : user.avatarUrl ? (
-      <div
-        style={{
-          width: 300,
-          height: 300,
-          borderRadius: 8,
-          overflow: "hidden",
-        }}
-      >
-        <img
-  src={user.avatarUrl}
-  style={{
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  }}
-/>
-      </div>
-    ) : null}
-  </div>
-</div>
-
-     
-      
+        <div
+          style={{
+            marginBottom: 24,
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              width: 600,
+              height: 300,
+              background: "#f7f9fa",
+              border: "1px solid #d1d7dc",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {previewUrl ? (
+              <Cropper
+                image={previewUrl}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            ) : user.avatarUrl ? (
+              <div
+                style={{
+                  width: 300,
+                  height: 300,
+                  borderRadius: 8,
+                  overflow: "hidden",
+                }}
+              >
+                <img
+                  src={user.avatarUrl}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              </div>
+            ) : null}
+          </div>
+        </div>
 
         {/* ZOOM */}
         {previewUrl && (
@@ -208,7 +188,7 @@ export default function PhotoPage() {
           className="btn btn-primary"
           disabled={!file || saving}
           onClick={save}
-          style={{ fontWeight: 600, padding: "6px 20px"}}
+          style={{ fontWeight: 600, padding: "6px 20px" }}
         >
           {saving ? "Saving…" : "Save"}
         </button>

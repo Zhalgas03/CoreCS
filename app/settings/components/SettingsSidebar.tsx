@@ -6,9 +6,12 @@ import { useSettingsUser } from "./SettingsUserContext"
 
 export default function SettingsSidebar() {
   const pathname = usePathname()
-  const { user } = useSettingsUser()
+  const ctx = useSettingsUser()
 
-  if (!user) return null
+  // контекст может быть null во время initial render / hydration
+  if (!ctx || !ctx.user) return null
+
+  const { user } = ctx
 
   return (
     <aside
@@ -72,7 +75,7 @@ export default function SettingsSidebar() {
         </div>
 
         <Link
-          href={`/profile`}
+          href="/profile"
           style={{
             fontSize: 14,
             color: "#1c1d1f",
@@ -88,9 +91,14 @@ export default function SettingsSidebar() {
         <NavItem href="/settings" active={pathname === "/settings"}>
           Profile
         </NavItem>
-        <NavItem href="/settings/photo" active={pathname === "/settings/photo"}>
+
+        <NavItem
+          href="/settings/photo"
+          active={pathname === "/settings/photo"}
+        >
           Photo
         </NavItem>
+
         <NavItem
           href="/settings/security"
           active={pathname === "/settings/security"}
@@ -108,7 +116,7 @@ export default function SettingsSidebar() {
   )
 }
 
-/* ---------- ITEM ---------- */
+/* ---------- NAV ITEM ---------- */
 
 function NavItem({
   href,

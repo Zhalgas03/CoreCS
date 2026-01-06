@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
 import { prisma } from "@/app/lib/prisma"
+import { cookies } from "next/headers"
 
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization")
-  if (!auth) {
+  /* ---------- TOKEN FROM COOKIE ---------- */
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  if (!token) {
     return NextResponse.json({ owned: false })
   }
 
   let payload: any
   try {
     payload = jwt.verify(
-      auth.replace("Bearer ", ""),
+      token,
       process.env.JWT_SECRET!
     )
   } catch {
@@ -20,7 +24,7 @@ export async function GET(req: Request) {
 
   const userId = payload.userId
 
-  // ⬇️ получаем courseSlug из query
+  /* ---------- COURSE SLUG ---------- */
   const { searchParams } = new URL(req.url)
   const courseSlug = searchParams.get("courseSlug")
 
@@ -28,7 +32,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ owned: false })
   }
 
-  // 🔎 проверка доступа
+  /* ---------- OWNERSHIP CHECK ---------- */
   const owned = await prisma.user_courses.findFirst({
     where: {
       user_id: userId,
@@ -37,6 +41,6 @@ export async function GET(req: Request) {
   })
 
   return NextResponse.json({
-    owned: !!owned,
+    owned: Boolean(owned),
   })
 }

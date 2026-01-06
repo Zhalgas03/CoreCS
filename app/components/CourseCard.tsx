@@ -5,8 +5,14 @@ import { formatPrice } from "../lib/formatPrice"
 
 type Props = {
   title: string
+  author: string
   tagline?: string
   coverUrl?: string
+
+  rating?: number
+  reviewsCount?: number
+  durationHours?: number
+
   price: number
   currency: "USD" | "EUR" | "RUB"
   onClick?: () => void
@@ -14,8 +20,12 @@ type Props = {
 
 export default function CourseCard({
   title,
+  author,
   tagline,
   coverUrl,
+  rating,
+  reviewsCount,
+  durationHours,
   price,
   currency,
   onClick,
@@ -29,39 +39,56 @@ export default function CourseCard({
         display: "flex",
         gap: 16,
         padding: 16,
-        border: "1px solid #e5e7eb",
-        borderRadius: 10,
+        borderRadius: 14,
         background: "#fff",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
         cursor: onClick ? "pointer" : "default",
-        height: 190,
         width: 340,
-        alignItems: "flex-start", // ⬅️ всё вверх
+        height: 210,
       }}
     >
-      {/* TEXT */}
+            {/* LEFT */}
       <div
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          height: "100%",
         }}
       >
         {/* TITLE */}
         <h3
           style={{
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: 600,
-            marginBottom: 6,
             color: "#111827",
+            marginBottom: 4,
           }}
         >
           {title}
         </h3>
 
+{/* AUTHOR */}
+<div
+  style={{
+    fontSize: 13,
+    color: "#ee6730",
+    marginBottom: 8,
+    textShadow: `
+      -0.05px -0.05px 0 #000,
+       0.05px -0.05px 0 #000,
+      -0.05px  0.05px 0 #000,
+       0.05px  0.05px 0 #000
+    `,
+    fontWeight: 600,
+  }}
+>
+  {author}
+</div>
+
+
         {/* TAGLINE */}
         {tagline && (
-          <p
+          <div
             style={{
               fontSize: 13,
               color: "#6b7280",
@@ -69,40 +96,70 @@ export default function CourseCard({
             }}
           >
             {tagline}
-          </p>
+          </div>
         )}
 
-        {/* PRICE — ВНИЗ */}
-        <div
-          style={{
-            marginTop: "auto", // ⬅️ магия
-            fontWeight: 600,
-            fontSize: 20,
-            color: isFree ? "#16a34a" : "#2563eb",
-          }}
-        >
-          {isFree ? "Free" : formatPrice(price, currency)}
+        {/* ⬇️ PUSH DOWN */}
+        <div style={{ flex: 1 }} />
+
+        {/* BOTTOM */}
+        <div>
+          {/* META */}
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              fontSize: 11,
+              color: "#6b7280",
+              alignItems: "center",
+              marginBottom: 6,
+            }}
+          >
+            {rating && (
+              <span>
+                ⭐ <b>{rating}</b>
+              </span>
+            )}
+
+            {reviewsCount && (
+              <span>👤 {reviewsCount.toLocaleString()}</span>
+            )}
+
+            {durationHours && <span>⏱ {durationHours} hours</span>}
+          </div>
+
+          {/* PRICE */}
+          <div
+            style={{
+              fontSize: 18,
+              fontWeight: 600,
+              color: isFree ? "#16a34a" : "#2563eb",
+            }}
+          >
+            {isFree ? "Free" : formatPrice(price, currency)}
+          </div>
         </div>
       </div>
+
 
       {/* COVER */}
       {coverUrl && (
         <div
           style={{
             position: "relative",
-            width: 100,
-            height: 100,
-            flexShrink: 0,
-            borderRadius: 8,
+            width: 70,
+            height: 70,
+            borderRadius: 10,
             overflow: "hidden",
             background: "#f3f4f6",
+            flexShrink: 0,
           }}
         >
           <Image
             src={coverUrl}
             alt={title}
             fill
-            sizes="100px"
+            sizes="96px"
             style={{ objectFit: "cover" }}
           />
         </div>

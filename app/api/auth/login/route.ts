@@ -90,17 +90,27 @@ export async function POST(req: Request) {
     )
 
 
-    return NextResponse.json({
-      success: true,
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        is2FAEnabled: user.is_2fa_enabled,
-      },
-    })
+   const response = NextResponse.json({
+  success: true,
+  user: {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    is2FAEnabled: user.is_2fa_enabled,
+  },
+})
+
+response.cookies.set("token", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  path: "/",
+  maxAge: 60 * 60 * 24 * 7, // 7 дней
+})
+
+return response
+
   } catch (e) {
     console.error("LOGIN ERROR:", e)
     return NextResponse.json(

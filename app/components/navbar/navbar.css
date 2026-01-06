@@ -1,0 +1,160 @@
+/* ===============================
+   EXPLORE WRAPPER (hover zone)
+================================ */
+.explore-wrapper {
+  position: relative;
+}
+
+/* hover bridge — КЛЮЧ К СТАБИЛЬНОСТИ */
+.explore-wrapper::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 20px; /* >= dropdown offset */
+}
+
+/* ===============================
+   DROPDOWN
+================================ */
+.explore-dropdown {
+  position: absolute;
+  top: calc(100% + 16px);
+  left: -16px;
+
+  display: flex;
+  background: #fff;
+  border-radius: 6px;
+
+  box-shadow:
+    0 12px 24px rgba(0,0,0,0.12),
+    0 4px 8px rgba(0,0,0,0.08);
+
+  z-index: 2000;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* SHOW ON HOVER */
+.explore-wrapper:hover .explore-dropdown {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ===============================
+   LEFT COLUMN
+================================ */
+.explore-left {
+  width: 160px;
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  border-right: 1px solid #e5e7eb;
+}
+
+/* ===============================
+   RIGHT COLUMN
+   (рендерится ТОЛЬКО при activeCategory)
+================================ */
+.explore-right {
+  min-width: 260px;
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ===============================
+   TEXT / ITEMS
+================================ */
+.explore-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.explore-item {
+  padding: 6px 8px;
+  border-radius: 6px;
+  
+  font-size: 14px;
+  line-height: 1.25;
+  color: #111827;
+  text-decoration: none;
+  cursor: pointer;
+
+  transition: background 0.12s ease;
+}
+
+.explore-item:hover {
+  background: #f3f4f6;
+}
+
+.explore-item.active {
+  background: #f3f4f6;
+  font-weight: 500;
+}
+
+/* ===============================
+   SEPARATOR
+================================ */
+.explore-separator {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 0;
+}
+
+/* ===============================
+   ARROWS
+================================ */
+.explore-item.has-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.explore-item .arrow {
+  font-size: 16px;
+  line-height: 1;
+  color: #9ca3af;
+  transition:
+    transform 0.12s ease,
+    color 0.12s ease;
+}
+
+/* hover */
+.explore-item:hover .arrow {
+  color: #374151;
+  transform: translateX(2px);
+}
+
+/* active */
+.explore-item.active .arrow {
+  color: #111827;
+  transform: translateX(3px);
+}
+
+/* Explore trigger animation (open state) */
+.explore-wrapper > .nav-hover {
+  color: #e5e5e5;
+  transition:
+    color 0.55s ease,
+    opacity 0.65s ease;
+}
+
+/* hover OR dropdown open */
+.explore-wrapper:hover > .nav-hover {
+  color: #0f9d58;
+  opacity: 1;
+}

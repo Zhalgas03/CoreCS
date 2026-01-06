@@ -10,18 +10,18 @@ type User = {
   aboutMe?: string | null
   createdAt?: string
 }
+
 type Ctx = {
   user: User | null
   refresh: () => Promise<void>
-  setUser: (u: User) => void
+  setUser: (u: User | null) => void
 }
 
 const SettingsUserContext = createContext<Ctx | null>(null)
 
+/* ✅ БЕЗ throw */
 export function useSettingsUser() {
-  const ctx = useContext(SettingsUserContext)
-  if (!ctx) throw new Error("useSettingsUser outside provider")
-  return ctx
+  return useContext(SettingsUserContext)
 }
 
 export function SettingsUserProvider({
@@ -32,29 +32,27 @@ export function SettingsUserProvider({
   const [user, setUser] = useState<User | null>(null)
 
   async function refresh() {
-  const token = localStorage.getItem("token")
-  if (!token) return
+    try {
+      const res = await fetch("/api/auth/profile", {
+        credentials: "include",
+      })
 
-  const res = await fetch("/api/auth/profile", {
-    headers: { Authorization: `Bearer ${token}` },
-  })
+      if (!res.ok) return
 
-  const data = await res.json()
+      const data = await res.json()
 
-  setUser({
-    username: data.username,
-    email: data.email,
-    is2FAEnabled: data.is2FAEnabled,
-    aboutMe: data.aboutMe ?? "",
-    avatarUrl: data.avatarUrl
-      ? data.avatarUrl.startsWith("http")
-        ? data.avatarUrl
-        : `${window.location.origin}${data.avatarUrl}`
-      : null,
-      createdAt: data.createdAt,
-  })
-}
-
+      setUser({
+        username: data.username,
+        email: data.email,
+        is2FAEnabled: data.is2FAEnabled,
+        aboutMe: data.aboutMe ?? "",
+        avatarUrl: data.avatarUrl,
+        createdAt: data.createdAt,
+      })
+    } catch {
+      setUser(null)
+    }
+  }
 
   useEffect(() => {
     refresh()

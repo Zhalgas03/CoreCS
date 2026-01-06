@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server"
-import { prisma } from "../../../lib/prisma"
-import { sign } from "jsonwebtoken"
+import { prisma } from "@/app/lib/prisma"
+import jwt from "jsonwebtoken"
 
 const JWT_SECRET = process.env.JWT_SECRET!
 
 export async function POST(req: Request) {
   const { email, code } = await req.json()
 
+  /* ---------- CHECK CODE ---------- */
   const record = await prisma.email_2fa_codes.findUnique({
     where: { email },
   })
@@ -32,11 +33,20 @@ export async function POST(req: Request) {
     )
   }
 
+  /* ---------- CLEANUP ---------- */
   await prisma.email_2fa_codes.delete({
     where: { email },
   })
 
-  const user = await prisma.users.findUnique({ where: { email } })
+  /* ---------- USER ---------- */
+  const user = await prisma.users.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      username: true,
+    },
+  })
+
   if (!user) {
     return NextResponse.json(
       { success: false, message: "User not found" },
@@ -44,21 +54,23 @@ export async function POST(req: Request) {
     )
   }
 
-  const token = sign(
-    { userId: user.id, email: user.email },
+  /* ---------- JWT ---------- */
+  const token = jwt.sign(
+    { userId: user.id },
     JWT_SECRET,
     { expiresIn: "7d" }
   )
 
-  return NextResponse.json({
-    success: true,
-    token,
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      is2FAEnabled: user.is_2fa_enabled,
-    },
+  /* ---------- COOKIE + RESPONSE ---------- */
+  const response = NextResponse.json({ success: true })
+
+  response.cookies.set("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7, // 7 дней
   })
+
+  return response
 }

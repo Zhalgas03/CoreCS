@@ -44,7 +44,7 @@ const filteredCourses =
     <main style={{ background: "#fff" }}>
       <div
         style={{
-          padding: "32px 24px",
+          padding: "16px 24px",
           maxWidth: 1100,
           margin: "0 auto",
         }}
@@ -61,7 +61,7 @@ const filteredCourses =
           style={{
             fontSize: 35,
             fontWeight: 600,
-            marginTop: 24,
+            marginTop: 16,
             color: "#111827",
           }}
         >
@@ -87,8 +87,12 @@ const filteredCourses =
             <CourseCard
               key={course.slug}
               title={course.catalog.title}
+              author={course.catalog.author}
               tagline={course.hero.tagline}
               coverUrl={course.catalog.coverUrl}
+              rating={course.catalog.rating}
+              reviewsCount={course.catalog.reviewsCount}
+              durationHours={course.catalog.durationHours}
               price={course.pricing.price}
               currency={course.pricing.currency}
               onClick={() =>

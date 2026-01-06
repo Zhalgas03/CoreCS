@@ -11,92 +11,77 @@ export default function CourseSidebar({ course }: { course: Course }) {
   const [owned, setOwned] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(true)
   const [checkingWishlist, setCheckingWishlist] = useState(true)
-
   const [inWishlist, setInWishlist] = useState(false)
 
-useEffect(() => {
-  const checkAccess = async () => {
-    const token = localStorage.getItem("token")
+  /* ---------- CHECK ACCESS + WISHLIST ---------- */
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const [ownershipRes, wishlistRes] = await Promise.all([
+          fetch(
+            `/api/courses/ownership?courseSlug=${course.slug}`,
+            { credentials: "include" }
+          ),
+          fetch(
+            `/api/wishlist/check?courseSlug=${course.slug}`,
+            { credentials: "include" }
+          ),
+        ])
 
-    if (!token) {
-      setOwned(false)
-      setInWishlist(false)
-      setCheckingAccess(false)
-      setCheckingWishlist(false)
-      return
+        if (ownershipRes.ok) {
+          const { owned } = await ownershipRes.json()
+          setOwned(owned)
+        } else {
+          setOwned(false)
+        }
+
+        if (wishlistRes.ok) {
+          const { inWishlist } = await wishlistRes.json()
+          setInWishlist(inWishlist)
+        } else {
+          setInWishlist(false)
+        }
+      } catch (e) {
+        console.error("Access check failed", e)
+        setOwned(false)
+        setInWishlist(false)
+      } finally {
+        setCheckingAccess(false)
+        setCheckingWishlist(false)
+      }
     }
 
-    try {
-      const [ownershipRes, wishlistRes] = await Promise.all([
-        fetch(`/api/courses/ownership?courseSlug=${course.slug}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`/api/wishlist/check?courseSlug=${course.slug}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ])
+    checkAccess()
+  }, [course.slug])
 
-      if (ownershipRes.ok) {
-        const { owned } = await ownershipRes.json()
-        setOwned(owned)
-      }
+  /* ---------- WISHLIST ---------- */
+  const toggleWishlist = async () => {
+    const method = inWishlist ? "DELETE" : "POST"
+    const url = inWishlist
+      ? "/api/wishlist/remove"
+      : "/api/wishlist/add"
 
-      if (wishlistRes.ok) {
-        const { inWishlist } = await wishlistRes.json()
-        setInWishlist(inWishlist)
-      }
-    } catch (e) {
-      console.error("Access check failed", e)
-    } finally {
-      setCheckingAccess(false)
-      setCheckingWishlist(false)
-    }
-  }
+    const res = await fetch(url, {
+      method,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ courseSlug: course.slug }),
+    })
 
-  checkAccess()
-}, [course.slug])
-
-
-const toggleWishlist = async () => {
-  const token = localStorage.getItem("token")
-  if (!token) {
-    router.push("/login")
-    return
-  }
-
-  const method = inWishlist ? "DELETE" : "POST"
-  const url = inWishlist
-    ? "/api/wishlist/remove"
-    : "/api/wishlist/add"
-
-  await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ courseSlug: course.slug }),
-  })
-
-  setInWishlist(!inWishlist)
-}
-
-
-
-
-  // 💳 оплата
-  const enroll = async () => {
-    const token = localStorage.getItem("token")
-
-    if (!token) {
+    if (res.status === 401) {
       router.push("/login")
       return
     }
 
+    setInWishlist(!inWishlist)
+  }
+
+  /* ---------- ENROLL / STRIPE ---------- */
+  const enroll = async () => {
     const profileRes = await fetch("/api/auth/profile", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      credentials: "include",
     })
 
     if (!profileRes.ok) {
@@ -108,9 +93,9 @@ const toggleWishlist = async () => {
 
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         courseId: course.slug,
@@ -167,35 +152,38 @@ const toggleWishlist = async () => {
             </button>
           )}
 
+          {/* WISHLIST */}
           <button
-  onClick={toggleWishlist}
-  disabled={checkingWishlist || owned}
-  className={`btn w-100 py-3 fs-6 mb-3 ${
-    inWishlist ? "btn-outline-danger" : "btn-outline-success"
-  }`}
->
-  {checkingWishlist
-    ? "Loading…"
-    : inWishlist
-      ? "Remove from wishlist"
-      : "Add to wishlist"}
-</button>
+            onClick={toggleWishlist}
+            disabled={checkingWishlist || owned}
+            className={`btn w-100 py-3 fs-6 mb-3 ${
+              inWishlist ? "btn-outline-danger" : "btn-outline-success"
+            }`}
+          >
+            {checkingWishlist
+              ? "Loading…"
+              : inWishlist
+                ? "Remove from wishlist"
+                : "Add to wishlist"}
+          </button>
 
-          {/* INFO */}
-          <div className="bg-light rounded-3 p-3 small">
-            <p className="fw-semibold mb-2">What’s included</p>
-            <ul className="list-unstyled mb-2">
-              <li>• 12 lessons</li>
-              <li>• 2h 21m of video</li>
-              <li>• 51 quizzes</li>
-            </ul>
-            <a href="#" className="text-primary text-decoration-none">
-              View full syllabus
-            </a>
-            <div className="text-muted mt-2">
-              Last updated Nov 5, 2025
-            </div>
-          </div>
+{/* INFO */}
+<div className="bg-light rounded-3 p-3 small">
+  <p className="fw-semibold mb-2">What’s included</p>
+
+  <ul className="list-unstyled mb-2">
+    <li>• {course.curriculum.length} lessons</li>
+    <li>• {course.catalog.durationHours} hours</li>
+  </ul>
+
+  <a
+    href="#curriculum"
+    className="text-primary text-decoration-none"
+  >
+    View full syllabus
+  </a>
+</div>
+
         </div>
       </div>
     </aside>
