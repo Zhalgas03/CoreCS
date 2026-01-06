@@ -13,13 +13,13 @@ type User = {
 
 type Ctx = {
   user: User | null
+  loading: boolean
   refresh: () => Promise<void>
   setUser: (u: User | null) => void
 }
 
 const SettingsUserContext = createContext<Ctx | null>(null)
 
-/* ✅ БЕЗ throw */
 export function useSettingsUser() {
   return useContext(SettingsUserContext)
 }
@@ -30,6 +30,7 @@ export function SettingsUserProvider({
   children: React.ReactNode
 }) {
   const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   async function refresh() {
     try {
@@ -37,7 +38,10 @@ export function SettingsUserProvider({
         credentials: "include",
       })
 
-      if (!res.ok) return
+      if (!res.ok) {
+        setUser(null)
+        return
+      }
 
       const data = await res.json()
 
@@ -51,6 +55,8 @@ export function SettingsUserProvider({
       })
     } catch {
       setUser(null)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -59,7 +65,9 @@ export function SettingsUserProvider({
   }, [])
 
   return (
-    <SettingsUserContext.Provider value={{ user, setUser, refresh }}>
+    <SettingsUserContext.Provider
+      value={{ user, loading, setUser, refresh }}
+    >
       {children}
     </SettingsUserContext.Provider>
   )

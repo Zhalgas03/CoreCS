@@ -9,7 +9,7 @@ export default function SettingsSidebar() {
   const ctx = useSettingsUser()
 
   // контекст может быть null во время initial render / hydration
-  if (!ctx || !ctx.user) return null
+  if (!ctx) return null
 
   const { user } = ctx
 
