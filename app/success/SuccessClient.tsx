@@ -1,10 +1,11 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function SuccessClient() {
   const params = useSearchParams()
+  const router = useRouter()
   const sessionId = params.get("session_id")
 
   const [status, setStatus] = useState<
@@ -22,15 +23,25 @@ export default function SuccessClient() {
       .then(data => {
         if (data.paid) {
           setStatus("ok")
+
+          // ⏩ даём чуть времени и редиректим
+          setTimeout(() => {
+            router.replace("/my-learning")
+          }, 1200)
         } else {
           setStatus("error")
         }
       })
       .catch(() => setStatus("error"))
-  }, [sessionId])
+  }, [sessionId, router])
 
-  if (status === "loading") return <p>Checking payment...</p>
-  if (status === "error") return <p>Payment not confirmed</p>
+  if (status === "loading") {
+    return <p>Checking payment...</p>
+  }
 
-  return <h1>Payment successful 🎉</h1>
+  if (status === "error") {
+    return <p>Payment not confirmed</p>
+  }
+
+  return <p>Payment successful 🎉 Redirecting…</p>
 }

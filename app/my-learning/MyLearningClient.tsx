@@ -25,6 +25,18 @@ export default function MyLearningClient({
   const [tab, setTab] = useState<
     "all" | "wishlist" | "archived" | "tools"
   >("all")
+  
+  async function removeFromWishlist(courseSlug: string) {
+  const res = await fetch("/api/wishlist/remove", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ courseSlug }),
+  })
+
+  if (res.ok) {
+    router.refresh()
+  }
+}
 
   return (
     <>
@@ -143,46 +155,76 @@ export default function MyLearningClient({
 
         {/* ================= WISHLIST ================= */}
         {tab === "wishlist" && (
-          <>
-            {wishlistCourses.length === 0 ? (
-              <p>Wishlist is empty</p>
-            ) : (
-              <div
+  <>
+    {wishlistCourses.length === 0 ? (
+      <p>Wishlist is empty</p>
+    ) : (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fill, minmax(260px, 1fr))",
+          gap: 30,
+        }}
+      >
+        {wishlistCourses.map(item => {
+          const course = courses.find(
+            c => c.slug === item.slug
+          )
+          if (!course) return null
+
+          return (
+            <div
+              key={course.slug}
+              style={{
+                position: "relative",
+              }}
+            >
+              {/* ❌ REMOVE BUTTON */}
+              <button
+                onClick={e => {
+                  e.stopPropagation()
+                  removeFromWishlist(course.slug)
+                }}
+                title="Remove from wishlist"
                 style={{
-                  display: "grid",
-                  gridTemplateColumns:
-                    "repeat(auto-fill, minmax(260px, 1fr))",
-                  gap: 30,
+                  position: "absolute",
+                  bottom: 10,
+                  right: 10,
+                  border: "2px solid #a8a8a8ff",
+                  borderRadius: 6,
+                  padding: "6px 6px",
+                  fontSize: 12,
+                  cursor: "pointer",
+                  zIndex: 2,
+                  marginRight: 8,
                 }}
               >
-                {wishlistCourses.map(item => {
-                  const course = courses.find(
-                    c => c.slug === item.slug
-                  )
-                  if (!course) return null
+                🗑️
+              </button>
 
-                  return (
-                    <CourseCard
-                      key={course.slug}
-                      title={course.catalog.title}
-                      author={course.catalog.author}
-                      tagline={course.hero.tagline}
-                      coverUrl={course.catalog.coverUrl}
-                      rating={course.catalog.rating}
-                      reviewsCount={course.catalog.reviewsCount}
-                      durationHours={course.catalog.durationHours}
-                      price={course.pricing.price}
-                      currency={course.pricing.currency}
-                      onClick={() =>
-                        router.push(`/courses/${course.slug}`)
-                      }
-                    />
-                  )
-                })}
-              </div>
-            )}
-          </>
-        )}
+              <CourseCard
+                title={course.catalog.title}
+                author={course.catalog.author}
+                tagline={course.hero.tagline}
+                coverUrl={course.catalog.coverUrl}
+                rating={course.catalog.rating}
+                reviewsCount={course.catalog.reviewsCount}
+                durationHours={course.catalog.durationHours}
+                price={course.pricing.price}
+                currency={course.pricing.currency}
+                onClick={() =>
+                  router.push(`/courses/${course.slug}`)
+                }
+              />
+            </div>
+          )
+        })}
+      </div>
+    )}
+  </>
+)}
+
       </main>
     </>
   )
