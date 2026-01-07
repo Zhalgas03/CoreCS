@@ -6,15 +6,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 })
 
 /**
- * ✅ Единственно правильный способ получить baseUrl
+ * ✅ Корректно определяем baseUrl
+ * 1) Приоритет — origin запроса (самый надёжный вариант)
+ * 2) Vercel Preview / Production
+ * 3) Localhost
  */
-function getBaseUrl() {
-  // Vercel Preview / Production
+function getBaseUrl(req: Request) {
+  const origin = req.headers.get("origin")
+  if (origin) return origin
+
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`
   }
 
-  // Local development
   return "http://localhost:3000"
 }
 
@@ -37,7 +41,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const baseUrl = getBaseUrl()
+    const baseUrl = getBaseUrl(req)
 
     console.log("🌍 STRIPE BASE URL:", baseUrl)
 
@@ -51,7 +55,7 @@ export async function POST(req: Request) {
             product_data: {
               name: title,
             },
-            unit_amount: Math.round(price * 100),
+            unit_amount: Math.round(Number(price) * 100),
           },
           quantity: 1,
         },
