@@ -29,8 +29,9 @@ export default function UserMenu({ user }: Props) {
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
+    window.dispatchEvent(new Event("auth-changed"))
     router.push("/login")
-    router.refresh()
+    
   }
 
   return (

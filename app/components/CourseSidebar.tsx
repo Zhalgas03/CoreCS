@@ -116,7 +116,7 @@ export default function CourseSidebar({ course }: { course: Course }) {
   }
 
   return (
-    <aside className="position-sticky" style={{ top: 40 }}>
+    <aside className="position-sticky" style={{ top: 60 }}>
       <div className="rounded-3 p-4 bg-white">
 
         {/* PRICE */}

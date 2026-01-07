@@ -43,7 +43,7 @@ export default function LoginPage() {
     }
 
     if (data.success) {
-      router.refresh()
+      window.dispatchEvent(new Event("auth-changed"))
       router.push("/")
     } else {
       setError(data.message || "Login failed")
@@ -62,10 +62,10 @@ export default function LoginPage() {
 
     const data = await res.json()
 
-    if (data.success) {
-      router.refresh()
-      router.push("/")
-    } else {
+      if (data.success) {
+        window.dispatchEvent(new Event("auth-changed"))
+        router.push("/")
+      } else {
       setError(data.message || "Invalid verification code")
       setCode("") 
     }
@@ -73,9 +73,13 @@ export default function LoginPage() {
 
   return (
     <div
-  className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-dark"
-  style={{ marginTop: "-80px" }}
+  className="container-fluid d-flex align-items-center justify-content-center bg-dark"
+  style={{
+    minHeight: "calc(100dvh - 50px)",
+    position: "relative",
+  }}
 >
+
       <div className="card shadow-lg p-4 auth-appear" style={{ maxWidth: 420, width: "100%", minHeight: 580 }}>
         <div style={{ maxWidth: 360, margin: "0 auto",}}>
         {/* Auth switch */}

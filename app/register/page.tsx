@@ -88,8 +88,9 @@ export default function RegisterPage() {
 
 return (
   <div
-    className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-dark"
-    style={{ marginTop: "-80px" }}
+    className="container-fluid d-flex align-items-center justify-content-center bg-dark"
+    style={{   minHeight: "calc(100dvh - 50px)",
+    position: "relative", }}
   >
     <div className="card shadow-lg p-4 auth-appear" style={{ maxWidth: 620, width: "100%", minHeight: 580 }}>
       

@@ -15,15 +15,42 @@ export default function NavbarClient() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetch("/api/auth/profile")
-      .then(res => (res.ok ? res.json() : null))
-      .then(data => {
-        setUser(data)
-        setLoading(false)
+useEffect(() => {
+  let mounted = true
+
+  const loadUser = async () => {
+    try {
+      const res = await fetch("/api/auth/profile", {
+        credentials: "include",
+        cache: "no-store",
       })
-      .catch(() => setLoading(false))
-  }, [])
+
+      if (!mounted) return
+
+      if (res.ok) {
+        setUser(await res.json())
+      } else {
+        setUser(null)
+      }
+    } finally {
+      if (mounted) setLoading(false)
+    }
+  }
+
+  loadUser()
+
+  const onAuthChange = () => {
+    setLoading(true)
+    loadUser()
+  }
+
+  window.addEventListener("auth-changed", onAuthChange)
+
+  return () => {
+    mounted = false
+    window.removeEventListener("auth-changed", onAuthChange)
+  }
+}, [])
 
   return (
     <nav
